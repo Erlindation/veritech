@@ -1,41 +1,38 @@
 # VeriTech
-Aplicación de verificación de afirmaciones factuales.
+
+> Aplicación web para verificación de información online basada en evidencias.
+
 Autor: Erlinda Canillas Sánchez.
 
+## ¿Qué es VeriTech?
 
-### 15/02/2026
-* Comienzo el proyecto con la idea clara qué necesito en frontend, backend y lógica utilizada para realizarlo.
-Mi idea es obtener una plataforma donde usuarios puedan ¿loggearse? verificar afirmaciones.
-Se contrastará con fuentes obtenidas de APIs y web scraping. Utilizaré python como idioma principal.
+VeriTech permite a usuarios registrados introducir afirmaciones factuales en lenguaje natural y recibir un veredicto estructurado (*Verificable*, *Engañoso* o *No comprobable*) respaldado por evidencias obtenidas de la Google Fact Check Tools API. Todas las consultas se almacenan en PostgreSQL para consulta posterior.
 
-- Tiempo echado 1 hora real de trabajo. Media hora de investigación.
+---
 
-### 22/02/2026
-* En el día de hoy creo programa en VSCode y prepararé el repositorio en Github. Comenzar a pensar en la estructura del proyecto y comenzar con los primeros pasos.
+## Requisitos previos
 
-Respecto a la memoria, sigo añadiendo contenido en la justificación y la introducción.
+| Herramienta | Versión mínima | Descarga |
+|-------------|---------------|----------|
+| Python | 3.11+ | https://www.python.org/downloads/ |
+| PostgreSQL | 15+ | https://www.postgresql.org/download/windows/ |
+| Git | cualquiera | https://git-scm.com/ |
+| VS Code | cualquiera | https://code.visualstudio.com/ |
 
-Tiempo echado: 1h30
+---
 
-### 26/02/2026
+## Instalación paso a paso (Windows)
 
-Diseño más basado en la plantilla que uso en mi empresa, con:
-- Postgres
-- Testeo con Swagger
-- Credenciales con JWT
-- Backend basado en código Python para tratar con bbdd y APIs.
-- uvicorn.
-- virtual environment.
+Este proyecto mantiene una estructura básica de backend y frontend donde comenzaré a desarrollar desde el backend arriba.
 
-### 07/03/2026
+Primero, dentro del backend/, añado database.py, que me permitirá desplegar PostgreSQL — relacional, con tablas, filas y columnas que configuro en pgAdmin. Desde la URL en .env.template:
 
-He trabajado mucho en el diseño de la aplicación y he empezado a programar. He decidido que como voy a basarme en el formato que uso en el trabajo, voy a "inspirarme" de la manera en que organizamos los datos. 
+postgresql://usuario:contraseña@localhost:5432/veritech
+Que ejecutará esta estructura:
 
-Primero implemento la misma manera de trabajar con APIs del pipeline con el que trabajamos. 
-
-También, voy a usar un env local, crear un requirements.txt e implementar uvicorn.
-
-Añado el .gitignore y lo alimento para poder crear el virtual environment con sus dependencias.
-
-*Resuelvo problemas con git y muevo el proyecto a C:/dev/, vuelvo a subir a git con nuevo nombre para poder trabajar en mis diferentes ordenadores con seguridad.
-
+- load_dotenv()	Lee .env y carga las variables
+- DATABASE_URL	Coge la URL de conexión del .env
+- create_engine(...)	Crea la conexión real a PostgreSQL
+- SessionLocal	Fábrica de sesiones — cada petición HTTP obtiene la suya
+- Base	Clase madre de todos mis modelos (tablas) — cuando se hace class User(Base), SQLAlchemy crea esa tabla
+- get_db()	Función que FastAPI usará como dependencia en los endpoints — abre una sesión, la da al endpoint, y la cierra siempre aunque haya error
