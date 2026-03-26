@@ -10,29 +10,70 @@ VeriTech permite a usuarios registrados introducir afirmaciones factuales en len
 
 ---
 
-## Requisitos previos
+## Stack tecnológico
 
-| Herramienta | Versión mínima | Descarga |
-|-------------|---------------|----------|
-| Python | 3.11+ | https://www.python.org/downloads/ |
-| PostgreSQL | 15+ | https://www.postgresql.org/download/windows/ |
-| Git | cualquiera | https://git-scm.com/ |
-| VS Code | cualquiera | https://code.visualstudio.com/ |
+| Capa | Tecnología |
+|------|-----------|
+| Backend | Python 3.13 + FastAPI |
+| Base de datos | PostgreSQL (Supabase) |
+| ORM | SQLAlchemy |
+| Autenticación | JWT (python-jose + bcrypt) |
+| Servidor | Uvicorn |
+| Testing API | Swagger UI (integrado en FastAPI) |
 
 ---
 
-## Instalación paso a paso (Windows)
+## Estructura del proyecto
 
-Este proyecto mantiene una estructura básica de backend y frontend donde comenzaré a desarrollar desde el backend arriba.
+```
+backend/
+├── main.py              # Punto de entrada FastAPI
+├── database.py          # Conexión SQLAlchemy + sesiones
+├── models/
+│   └── user.py          # Modelo ORM tabla users
+├── routers/             # Endpoints (en desarrollo)
+└── services/            # Lógica de negocio (en desarrollo)
+```
 
-Primero, dentro del backend/, añado database.py, que me permitirá desplegar PostgreSQL — relacional, con tablas, filas y columnas que configuro en pgAdmin. Desde la URL en .env.template:
+---
 
-postgresql://usuario:contraseña@localhost:5432/veritech
-Que ejecutará esta estructura:
+## Estado actual (entrega parcial — marzo 2026)
 
-- load_dotenv()	Lee .env y carga las variables
-- DATABASE_URL	Coge la URL de conexión del .env
-- create_engine(...)	Crea la conexión real a PostgreSQL
-- SessionLocal	Fábrica de sesiones — cada petición HTTP obtiene la suya
-- Base	Clase madre de todos mis modelos (tablas) — cuando se hace class User(Base), SQLAlchemy crea esa tabla
-- get_db()	Función que FastAPI usará como dependencia en los endpoints — abre una sesión, la da al endpoint, y la cierra siempre aunque haya error
+### Completado
+- Conexión a base de datos PostgreSQL (Supabase) verificada
+- Modelo ORM `User` definido con SQLAlchemy
+- Punto de entrada FastAPI con health check en `GET /`
+- Todas las dependencias instaladas y documentadas en `requirements.txt`
+- Entorno virtual configurado
+
+### En desarrollo
+- `POST /auth/register` y `POST /auth/login` — registro e inicio de sesión con JWT
+- `POST /claims` y `GET /claims` — envío y consulta de afirmaciones
+- Integración con Google Fact Check Tools API
+- Frontend
+
+---
+
+## Instalación local
+
+### Requisitos previos
+
+| Herramienta | Versión mínima |
+|-------------|---------------|
+| Python | 3.11+ |
+| Git | cualquiera |
+| VS Code | cualquiera |
+
+### Pasos
+
+```bash
+git clone https://github.com/Erlindation/veritech.git
+cd veritech
+python -m venv .venv
+.venv\Scripts\activate        # Windows
+pip install -r requirements.txt
+cp .env.template .env         # Rellenar con credenciales propias
+uvicorn backend.main:app --reload
+```
+
+Accede a la documentación interactiva en: `http://localhost:8000/docs`
