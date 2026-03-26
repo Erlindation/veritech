@@ -113,6 +113,39 @@ Tras revisar el stack utilizado en Bluetree, se define la arquitectura técnica 
 
 ---
 
+## [Semana 5] – 26/03/2026
+
+### Contexto
+Primera sesión de trabajo tras el período de exámenes. Se retoma el proyecto con el objetivo de consolidar la base del backend y dejar el sistema de autenticación en estado avanzado.
+
+### Problemas encontrados y resueltos
+- **Proyecto en OneDrive con espacios y caracteres especiales en la ruta:**
+  Git y OneDrive son incompatibles (OneDrive intenta sincronizar `.git/` mientras Git escribe en él, lo que puede corromper el repositorio). Solución: migración del proyecto a `C:\dev\VeriTech`, ruta sin espacios ni tildes.
+- **Remote de Git con URL inválida:** el remote `origin` apuntaba a un valor placeholder. Solución: `git remote set-url origin git@github.com:Erlindation/veritech.git`.
+- **Conexión a Supabase fallando por DNS:** la URL de conexión directa (`db.xxxx.supabase.co:5432`) no resolvía en la red actual. Solución: cambio a Transaction Pooler (`aws-1-eu-west-1.pooler.supabase.com:6543`) con IPv4 forzado desde el panel de Supabase.
+- **Contraseña con caracteres especiales en la URL de conexión:** el símbolo `!` requiere URL-encoding (`%21`) en una cadena de conexión PostgreSQL. Solución temporal: contraseña sin caracteres especiales para el entorno de desarrollo.
+
+### Añadido
+- `backend/main.py`: punto de entrada FastAPI con middleware CORS y health check en `GET /`. Las tablas se crean automáticamente al arrancar (`Base.metadata.create_all`).
+- `backend/models/user.py`: modelo ORM SQLAlchemy para la tabla `users` (campos: `id`, `email`, `hashed_password`, `is_active`, `created_at`).
+- `backend/schemas/users.py`: modelos Pydantic para validación de datos de usuario (`UserCreate`, `UserLogin`, `UserResponse`). Separación explícita entre datos de entrada y datos de respuesta — la contraseña nunca se devuelve.
+
+### Referencia de diseño
+La estructura del backend (separación en `models/`, `schemas/`, `routers/`, `services/`), el patrón de sesiones por petición con `get_db()`, y el uso de Pydantic para validar entradas y filtrar salidas están directamente inspirados en la arquitectura de los pipelines ETL y dashboards desarrollados en Bluetree, empresa donde trabajo actualmente. Esta familiaridad con el patrón ha permitido tomar decisiones de diseño con criterio propio y no solo seguir tutoriales.
+- README actualizado con estado real del proyecto, estructura de carpetas y pasos de instalación.
+
+### Horas dedicadas
+| Actividad | Tiempo |
+|-----------|--------|
+| Resolución de problemas Git y migración de carpeta | 0h 45min |
+| Configuración y depuración de conexión a Supabase | 1h |
+| Implementación de `main.py` y modelo `User` | 0h 45min |
+| Implementación de schemas Pydantic (`users.py`) | 0h 30min |
+| Documentación (README y changelog) | 0h 30min |
+| **Total sesión** | **3h 30min** |
+
+---
+
 ## Resumen acumulado
 
 | Semana | Fecha | Horas |
@@ -121,7 +154,8 @@ Tras revisar el stack utilizado en Bluetree, se define la arquitectura técnica 
 | Semana 2 | 22/02/2026 | 1h 30min |
 | Semana 3 | 26/02/2026 | 1h 15min |
 | Semana 4 | 07/03/2026 | 6h 30min |
-| **TOTAL** | | **~11h** |
+| Semana 5 | 26/03/2026 | 3h 30min |
+| **TOTAL** | | **~14h 15min** |
 
 ---
 

@@ -27,27 +27,31 @@ VeriTech permite a usuarios registrados introducir afirmaciones factuales en len
 
 ```
 backend/
-├── main.py              # Punto de entrada FastAPI
-├── database.py          # Conexión SQLAlchemy + sesiones
+├── main.py              # Punto de entrada FastAPI, arranque del servidor
+├── database.py          # Conexión SQLAlchemy + fábrica de sesiones
 ├── models/
-│   └── user.py          # Modelo ORM tabla users
-├── routers/             # Endpoints (en desarrollo)
+│   └── user.py          # Modelo ORM — tabla users en PostgreSQL
+├── schemas/
+│   └── users.py         # Validación de datos de entrada y salida (Pydantic)
+├── routers/             # Endpoints HTTP (en desarrollo)
 └── services/            # Lógica de negocio (en desarrollo)
 ```
 
 ---
 
-## Estado actual (entrega parcial — marzo 2026)
+## Estado actual
 
 ### Completado
-- Conexión a base de datos PostgreSQL (Supabase) verificada
-- Modelo ORM `User` definido con SQLAlchemy
-- Punto de entrada FastAPI con health check en `GET /`
-- Todas las dependencias instaladas y documentadas en `requirements.txt`
-- Entorno virtual configurado
+- Conexión verificada a PostgreSQL en la nube (Supabase) mediante Transaction Pooler
+- Servidor FastAPI arrancando con health check funcional en `GET /`
+- Modelo ORM `User` definido con SQLAlchemy (tabla `users` con email, contraseña hasheada, estado y fecha de creación)
+- Schemas Pydantic para registro, login y respuesta de usuario — con separación explícita de datos de entrada y salida
+- Todas las dependencias documentadas en `requirements.txt`
+- Entorno virtual configurado y reproducible
 
 ### En desarrollo
-- `POST /auth/register` y `POST /auth/login` — registro e inicio de sesión con JWT
+- `backend/services/auth.py` — hashing de contraseñas con bcrypt y generación de tokens JWT
+- `POST /auth/register` y `POST /auth/login` — endpoints de autenticación
 - `POST /claims` y `GET /claims` — envío y consulta de afirmaciones
 - Integración con Google Fact Check Tools API
 - Frontend
