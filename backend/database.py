@@ -1,9 +1,6 @@
-"""
-database.py
------------
-SQLAlchemy engine and session configuration.
-All models import Base from here to register their tables.
-"""
+# Configuración de la conexión a la base de datos.
+# Todo lo que tenga que ver con sesiones y el motor de SQLAlchemy vive aquí.
+# Los modelos importan Base desde aquí para que SQLAlchemy sepa qué tablas crear.
 
 import os
 from sqlalchemy import create_engine
@@ -20,21 +17,19 @@ if not DATABASE_URL:
 
 engine = create_engine(DATABASE_URL)
 
-# Each request gets its own session, closed when done.
+# Cada petición HTTP abre su propia sesión y la cierra al terminar.
+# autocommit=False significa que tengo que hacer db.commit() manualmente — así controlo cuándo se guarda.
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# All models inherit from Base so SQLAlchemy can create their tables.
+# Base es la clase madre de todos mis modelos.
+# Cuando hago class User(Base), SQLAlchemy sabe que tiene que crear una tabla para eso.
 Base = declarative_base()
 
 
 def get_db():
-    """
-    FastAPI dependency that provides a DB session per request.
-    Guarantees the session is closed even if an error occurs.
-
-    Usage in a router:
-        db: Session = Depends(get_db)
-    """
+    # FastAPI usa esto como dependencia en los endpoints.
+    # Abre la sesión, la cede al endpoint, y la cierra siempre — aunque haya un error.
+    # Se usa así en un router: db: Session = Depends(get_db)
     db = SessionLocal()
     try:
         yield db
