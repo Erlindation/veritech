@@ -145,6 +145,51 @@ La estructura del backend (separación en `models/`, `schemas/`, `routers/`, `se
 | **Total sesión** | **3h 30min** |
 
 ---
+## [Semana 6] – 16/04/2026
+
+### Añadido
+- `backend/services/auth.py`: lógica de autenticación completa — hashing de contraseñas con bcrypt (`hash_password`, `verify_password`) y generación/verificación de tokens JWT (`create_access_token`, `decode_access_token`). El token expira en 24 horas. La clave secreta se lee del `.env`.
+- `backend/routers/auth.py`: endpoints de autenticación conectados a la base de datos:
+  - `POST /auth/register` — crea un usuario nuevo, devuelve sus datos sin contraseña. Rechaza emails duplicados.
+  - `POST /auth/login` — verifica credenciales y devuelve un token JWT Bearer.
+- `backend/main.py`: router de autenticación registrado en la aplicación.
+
+### Referencia de diseño
+La separación entre `services/` (lógica pura) y `routers/` (endpoints HTTP) sigue el mismo patrón de capas usado en los pipelines de Bluetree, donde la lógica de negocio nunca vive directamente en el punto de entrada.
+
+### Horas dedicadas
+| Actividad | Tiempo |
+|-----------|--------|
+| Implementación de `services/auth.py` (bcrypt + JWT) | 1h |
+| Implementación de `routers/auth.py` (register + login) | 1h 15min |
+| Conexión del router en `main.py` y pruebas en Swagger | 0h 45min |
+| **Total sesión** | **3h** |
+
+---
+
+## [Semana 6 - Segunda sesión] – 18/04/2026
+
+### Añadido
+- `backend/models/claim.py`: modelo ORM para la tabla `claims` — guarda el texto de la afirmación, el veredicto (de momento vacío hasta integrar la API externa) y la referencia al usuario que la envió.
+- `backend/schemas/claims.py`: schemas Pydantic para afirmaciones (`ClaimCreate`, `ClaimResponse`).
+- `backend/routers/claims.py`: endpoints de afirmaciones con autenticación JWT obligatoria:
+  - `POST /claims` — envía una afirmación nueva
+  - `GET /claims` — devuelve solo las afirmaciones del usuario autenticado
+- Dependencia `get_current_user` que lee y valida el token Bearer en cada petición protegida.
+
+### Problema encontrado (pendiente de resolver)
+Al probar `POST /claims` en Swagger, error: `table "claims" does not exist`.
+
+
+### Horas dedicadas
+| Actividad | Tiempo |
+|-----------|--------|
+| Modelo ORM `Claim` y schemas Pydantic | 0h 45min |
+| Router `/claims` con autenticación JWT | 1h |
+| Pruebas en Swagger | 0h 15min |
+| **Total sesión** | **2h** |
+
+---
 
 ## Resumen acumulado
 
@@ -155,7 +200,9 @@ La estructura del backend (separación en `models/`, `schemas/`, `routers/`, `se
 | Semana 3 | 26/02/2026 | 1h 15min |
 | Semana 4 | 07/03/2026 | 6h 30min |
 | Semana 5 | 26/03/2026 | 3h 30min |
-| **TOTAL** | | **~14h 15min** |
+| Semana 5 (s2) | 16/04/2026 | 3h |
+| Semana 6 | 18/04/2026 | 2h |
+| **TOTAL** | | **~19h 15min** |
 
 ---
 

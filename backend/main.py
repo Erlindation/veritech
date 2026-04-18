@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.database import engine, Base
-from backend.routers import auth
+from backend.routers import auth, claims
 
 # Intenta crear las tablas al arrancar. Si la BD no responde, avisa pero no peta.
 # Cuando añada más modelos (claims, etc.) se crearán aquí también automáticamente.
@@ -31,6 +31,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(claims.router)
 
 
 @app.get("/")

@@ -33,8 +33,10 @@ backend/
 │   └── user.py          # Modelo ORM — tabla users en PostgreSQL
 ├── schemas/
 │   └── users.py         # Validación de datos de entrada y salida (Pydantic)
-├── routers/             # Endpoints HTTP (en desarrollo)
-└── services/            # Lógica de negocio (en desarrollo)
+├── routers/
+│   └── auth.py          # POST /auth/register, POST /auth/login
+└── services/
+    └── auth.py          # Hashing bcrypt + generación/verificación JWT
 ```
 
 ---
@@ -44,14 +46,14 @@ backend/
 ### Completado
 - Conexión verificada a PostgreSQL en la nube (Supabase) mediante Transaction Pooler
 - Servidor FastAPI arrancando con health check funcional en `GET /`
-- Modelo ORM `User` definido con SQLAlchemy (tabla `users` con email, contraseña hasheada, estado y fecha de creación)
-- Schemas Pydantic para registro, login y respuesta de usuario — con separación explícita de datos de entrada y salida
-- Todas las dependencias documentadas en `requirements.txt`
-- Entorno virtual configurado y reproducible
+- Modelo ORM `User` con SQLAlchemy (tabla `users`: email, contraseña hasheada, estado, fecha de creación)
+- Schemas Pydantic para registro, login y respuesta — contraseña nunca expuesta en respuestas
+- Lógica de autenticación completa: hashing bcrypt y tokens JWT con expiración
+- `POST /auth/register` — registro de usuarios con validación de email duplicado
+- `POST /auth/login` — verificación de credenciales y emisión de token Bearer
+- Documentación interactiva Swagger disponible en `/docs`
 
 ### En desarrollo
-- `backend/services/auth.py` — hashing de contraseñas con bcrypt y generación de tokens JWT
-- `POST /auth/register` y `POST /auth/login` — endpoints de autenticación
 - `POST /claims` y `GET /claims` — envío y consulta de afirmaciones
 - Integración con Google Fact Check Tools API
 - Frontend
