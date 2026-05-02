@@ -2,7 +2,7 @@
 # Si alguien manda un email sin @ o le falta un campo, Pydantic lo rechaza
 # antes de que llegue a la base de datos — sin que yo tenga que escribir esas comprobaciones.
 
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 
 
 # Lo que manda el usuario al registrarse.
@@ -10,6 +10,14 @@ from pydantic import BaseModel, EmailStr, ConfigDict
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+
+    @field_validator("password")
+    @classmethod
+    def password_min_length(cls, v: str) -> str:
+        # Sin esto, alguien podía registrarse con password="" y luego no poder entrar.
+        if len(v) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres.")
+        return v
 
 
 # Lo que manda al hacer login. Por ahora igual que UserCreate,

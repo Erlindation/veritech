@@ -191,6 +191,116 @@ Al probar `POST /claims` en Swagger, error: `table "claims" does not exist`.
 
 ---
 
+## [Semana 7] – 23/04/2026
+
+### Resuelto
+- **Bug sesión anterior:** la tabla `claims` no se creaba en Supabase porque el modelo `Claim` no se importaba en `main.py` antes de que `create_all()` se ejecutara. SQLAlchemy solo crea tablas de los modelos que conoce en el momento del arranque — si no los importas, los ignora. Solución: añadir `from backend.models import claim` en `main.py`.
+
+### Añadido
+- `backend/services/fact_check.py`: integración con la Google Fact Check Tools API. Recibe el texto de una afirmación, consulta la API y devuelve el veredicto en texto (`"Falso"`, `"Verdadero"`, `"No comprobable"`, etc.). Si la API no responde o no tiene datos, devuelve un mensaje descriptivo sin romper el endpoint.
+- `POST /claims` actualizado: ahora llama automáticamente a `check_claim()` antes de guardar, así el veredicto queda en la base de datos desde el momento de creación.
+
+### Referencia de diseño
+El patrón de separar la llamada a la API externa en `services/` en vez de meterla directamente en el router es el mismo que uso en Bluetree para los pipelines de datos — el router no sabe de dónde vienen los datos, solo los recibe y los devuelve.
+
+### Horas dedicadas
+| Actividad | Tiempo |
+|-----------|--------|
+| Diagnóstico y fix del bug de `create_all` | 0h 20min |
+| Implementación de `services/fact_check.py` | 1h |
+| Integración del servicio en el router `/claims` | 0h 30min |
+| Pruebas en Swagger con token real | 0h 10min |
+| **Total sesión** | **2h** |
+
+---
+
+## [Semana 7 – Sesión 2] – 25/04/2026
+
+### Resuelto
+- **Contraseña vacía en registro:** `UserCreate` aceptaba `password: ""` sin error. Cualquier usuario podía registrarse con contraseña vacía y luego no podía iniciar sesión. Solución: `@field_validator` en Pydantic que exige mínimo 8 caracteres.
+- **`GET /claims` sin paginación:** el endpoint devolvía todas las afirmaciones del usuario de golpe. Con muchos registros esto podría saturar la respuesta. Solución: parámetros `limit` (por defecto 20) y `offset` (por defecto 0).
+- **Idioma hardcodeado en Google Fact Check API:** `languageCode: "es"` hacía que afirmaciones en inglés no devolvieran resultados. Solución: eliminar el parámetro de idioma para que la API busque en todos los idiomas.
+- **RLS desactivado en Supabase:** alerta CRITICAL en el panel de Supabase indicando que las tablas `users` y `claims` no tenían Row Level Security habilitado. Solución: activar RLS y crear políticas de acceso total para el backend vía SQL Editor de Supabase.
+- **Warnings desde Supabase estudiados**:
+RLS policies que Supabase supone un peligro en seguridad, pero que en teoría no me afectan porque en mi programa uso tokens JWK para la autenticación (sin esos tokens, no se podría loguear nadie).
+
+### Horas dedicadas
+| Actividad | Tiempo |
+|-----------|--------|
+| Validación de contraseña mínima en schemas | 0h 20min |
+| Paginación en `GET /claims` | 0h 20min |
+| Fix idioma en `fact_check.py` | 0h 15min |
+| Investigación y resolución de RLS en Supabase | 1h |
+| Investigación de Swagger, endpoints y Supabase warnings | 1h |
+| **Total sesión** | **~3h** |
+
+---
+
+## [Semana 8] – 27/04/2026
+
+### Contexto
+Sesión tras tutoría con Carlos. Objetivo: completar el CRUD de claims para que todas las operaciones básicas estén operativas y probadas.
+
+### Añadido
+- `backend/schemas/claims.py`: schema `ClaimUpdate` para la operación de actualización — solo expone el campo `text`, que es el único modificable por el usuario.
+- `backend/routers/claims.py`: tres endpoints nuevos que completan el CRUD:
+  - `GET /claims/{id}` — devuelve una afirmación concreta del usuario autenticado. Devuelve 404 si no existe o pertenece a otro usuario (no se filtra información ajena).
+  - `PUT /claims/{id}` — actualiza el texto de una afirmación y relanza la consulta a la Google Fact Check API para obtener un veredicto actualizado.
+  - `DELETE /claims/{id}` — elimina una afirmación. Devuelve 204 sin cuerpo de respuesta. Solo puede borrar el propietario.
+
+### Decisión de diseño
+En los tres nuevos endpoints se filtra por `user_id` directamente en la query (`Claim.user_id == current_user.id`) en vez de hacer primero un `get by id` y luego comprobar la propiedad. Esto evita que un usuario pueda inferir si existe un claim con un id concreto aunque no sea suyo.
+
+### Horas dedicadas
+| Actividad | Tiempo |
+|-----------|--------|
+| Schema `ClaimUpdate` | 0h 10min |
+| Endpoints `GET /{id}`, `PUT /{id}`, `DELETE /{id}` | 0h 45min |
+| Pruebas en Swagger | 0h 15min |
+| Actualización de README y changelog | 0h 15min |
+| **Total sesión** | **~1h 30min** |
+
+---
+
+## [Semana 8] – 02/05/2026
+
+### Contexto
+Sesión enfocada en el frontend. Tras valorar las opciones disponibles, se descarta React por falta de tiempo para implementar el proyecto completo con ese framework, y se opta por HTML + CSS + JavaScript vanilla, que permite obtener un resultado funcional y demostrable con el tiempo disponible.
+
+### Decisión técnica: HTML + CSS + JS vanilla en lugar de React
+La idea inicial era usar React para el frontend. Sin embargo, con el tiempo restante hasta la entrega, React habría implicado tiempo de configuración (Vite, estructura de componentes, gestión del estado, build) que no añade valor evaluable en este punto. HTML + CSS + JS vanilla consume la misma API REST con `fetch`, permite una demo completamente funcional del CRUD, y la lógica queda más visible y explicable en la defensa sin capas de abstracción añadidas.
+
+### Añadido
+- `frontend/index.html`: pantalla de acceso con login y registro. Cambio entre formularios mediante pestañas. Redirige automáticamente al dashboard si ya hay sesión activa.
+- `frontend/claims.html`: dashboard principal con tabla de afirmaciones, formulario de nueva afirmación y acciones de editar y eliminar por fila.
+- `frontend/api.js`: módulo con todas las llamadas a la API REST del backend — login, registro, listar claims, crear, actualizar y eliminar. Gestiona el token JWT en `localStorage` y redirige al login si la sesión expira.
+- `frontend/style.css`: estilos base — página de acceso centrada, topbar, tabla de claims y formulario de creación.
+
+### Estado del frontend
+- Login y registro: completamente funcionales
+- Crear afirmación y mostrar veredicto: funcional
+- Eliminar afirmación: funcional con confirmación del navegador
+- Editar afirmación: funcional mediante diálogo nativo del navegador — pendiente sustituir por formulario inline en la tabla
+- Veredicto en tabla: se muestra como texto plano — pendiente añadir diferenciación visual según el valor
+
+### Ideas para continuar
+- Reemplazar el diálogo de edición por un campo editable inline en la propia fila de la tabla
+- Añadir colores o etiquetas al veredicto para distinguir visualmente entre resultados (verdadero, falso, no comprobable)
+- Mensajes de feedback más claros al crear o eliminar (por ejemplo, una notificación breve en pantalla en lugar de depender de los errores nativos del navegador)
+- Adaptar el diseño a pantallas pequeñas
+
+### Horas dedicadas
+| Actividad | Tiempo |
+|-----------|--------|
+| Valoración React vs. vanilla JS y decisión | 0h 20min |
+| Implementación `index.html` + `api.js` | 1h |
+| Implementación `claims.html` + `style.css` | 1h 15min |
+| Pruebas con backend en local | 0h 20min |
+| Documentación (README y changelog) | 0h 20min |
+| **Total sesión** | **~3h 15min** |
+
+---
+
 ## Resumen acumulado
 
 | Semana | Fecha | Horas |
@@ -202,7 +312,11 @@ Al probar `POST /claims` en Swagger, error: `table "claims" does not exist`.
 | Semana 5 | 26/03/2026 | 3h 30min |
 | Semana 5 (s2) | 16/04/2026 | 3h |
 | Semana 6 | 18/04/2026 | 2h |
-| **TOTAL** | | **~19h 15min** |
+| Semana 7 | 23/04/2026 | 2h |
+| Semana 7 (s2) | 25/04/2026 | 3h |
+| Semana 8 | 27/04/2026 | 1h 30min |
+| Semana 8 (s2) | 02/05/2026 | 3h 15min |
+| **TOTAL** | | **~29h** |
 
 ---
 

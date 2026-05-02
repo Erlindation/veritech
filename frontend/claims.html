@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeriTech – Mis afirmaciones</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-page">
+
+    <header class="topbar">
+        <span class="logo">VeriTech</span>
+        <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+    </header>
+
+    <main class="container">
+        <h2>Mis afirmaciones</h2>
+
+        <!-- Formulario nueva afirmación -->
+        <div class="card new-claim">
+            <h3>Nueva afirmación</h3>
+            <form id="form-create" onsubmit="handleCreate(event)">
+                <div class="field row">
+                    <input type="text" id="claim-text" required placeholder="Escribe aquí la afirmación a verificar..." class="input-wide">
+                    <button type="submit" class="btn-primary">Verificar</button>
+                </div>
+                <p class="error hidden" id="create-error"></p>
+            </form>
+        </div>
+
+        <!-- Tabla de claims -->
+        <div class="card">
+            <table id="claims-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Afirmación</th>
+                        <th>Veredicto</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="claims-body">
+                    <tr><td colspan="5" class="empty">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { getClaims, createClaim, updateClaim, deleteClaim } from './api.js';
+
+        if (!localStorage.getItem('token')) {
+            window.location.href = 'index.html';
+        }
+
+        window.logout = function() {
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+        };
+
+        async function loadClaims() {
+            const tbody = document.getElementById('claims-body');
+            try {
+                const claims = await getClaims();
+                if (claims.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty">Todavía no has enviado ninguna afirmación.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = claims.map(c => `
+                    <tr id="row-${c.id}">
+                        <td>${c.id}</td>
+                        <td class="claim-text">${c.text}</td>
+                        <td>${c.verdict ?? '—'}</td>
+                        <td>${new Date(c.created_at).toLocaleDateString('es-ES')}</td>
+                        <td class="actions">
+                            <button onclick="handleEdit(${c.id})" class="btn-edit">Editar</button>
+                            <button onclick="handleDelete(${c.id})" class="btn-delete">Eliminar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty error">Error al cargar las afirmaciones.</td></tr>';
+            }
+        }
+
+        window.handleCreate = async function(e) {
+            e.preventDefault();
+            const input = document.getElementById('claim-text');
+            const errorEl = document.getElementById('create-error');
+            errorEl.classList.add('hidden');
+            try {
+                await createClaim(input.value);
+                input.value = '';
+                await loadClaims();
+            } catch (err) {
+                errorEl.textContent = err.message;
+                errorEl.classList.remove('hidden');
+            }
+        };
+
+        // edición rápida — pendiente sustituir por modal
+        window.handleEdit = async function(id) {
+            const row = document.getElementById(`row-${id}`);
+            const currentText = row.querySelector('.claim-text').textContent;
+            const newText = prompt('Editar afirmación:', currentText);
+            if (!newText || newText === currentText) return;
+            try {
+                await updateClaim(id, newText);
+                await loadClaims();
+            } catch {
+                alert('No se pudo guardar el cambio.');
+            }
+        };
+
+        window.handleDelete = async function(id) {
+            if (!confirm('¿Eliminar esta afirmación?')) return;
+            try {
+                await deleteClaim(id);
+                document.getElementById(`row-${id}`).remove();
+            } catch {
+                alert('No se pudo eliminar.');
+            }
+        };
+
+        loadClaims();
+    </script>
+</body>
+</html>

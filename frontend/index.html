@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeriTech – Acceso</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+
+    <div class="auth-card">
+        <h1 class="logo">VeriTech</h1>
+        <p class="tagline">Verificación de afirmaciones factuales</p>
+
+        <div class="tabs">
+            <button class="tab active" id="tab-login" onclick="showTab('login')">Iniciar sesión</button>
+            <button class="tab" id="tab-register" onclick="showTab('register')">Registrarse</button>
+        </div>
+
+        <!-- LOGIN -->
+        <form id="form-login" onsubmit="handleLogin(event)">
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="login-email" required placeholder="tu@email.com">
+            </div>
+            <div class="field">
+                <label>Contraseña</label>
+                <input type="password" id="login-password" required placeholder="Mínimo 8 caracteres">
+            </div>
+            <p class="error hidden" id="login-error"></p>
+            <button type="submit" class="btn-primary">Entrar</button>
+        </form>
+
+        <!-- REGISTER -->
+        <form id="form-register" class="hidden" onsubmit="handleRegister(event)">
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="reg-email" required placeholder="tu@email.com">
+            </div>
+            <div class="field">
+                <label>Contraseña</label>
+                <input type="password" id="reg-password" required placeholder="Mínimo 8 caracteres">
+            </div>
+            <p class="error hidden" id="reg-error"></p>
+            <p class="success hidden" id="reg-success">Cuenta creada. Ya puedes iniciar sesión.</p>
+            <button type="submit" class="btn-primary">Crear cuenta</button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { login, register } from './api.js';
+
+        if (localStorage.getItem('token')) {
+            window.location.href = 'claims.html';
+        }
+
+        window.showTab = function(tab) {
+            document.getElementById('form-login').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('form-register').classList.toggle('hidden', tab !== 'register');
+            document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+            document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+        };
+
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            const errorEl = document.getElementById('login-error');
+            errorEl.classList.add('hidden');
+            try {
+                await login(
+                    document.getElementById('login-email').value,
+                    document.getElementById('login-password').value
+                );
+                window.location.href = 'claims.html';
+            } catch (err) {
+                errorEl.textContent = err.message;
+                errorEl.classList.remove('hidden');
+            }
+        };
+
+        window.handleRegister = async function(e) {
+            e.preventDefault();
+            const errorEl = document.getElementById('reg-error');
+            const successEl = document.getElementById('reg-success');
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+            try {
+                await register(
+                    document.getElementById('reg-email').value,
+                    document.getElementById('reg-password').value
+                );
+                successEl.classList.remove('hidden');
+                document.getElementById('form-register').reset();
+            } catch (err) {
+                errorEl.textContent = err.message;
+                errorEl.classList.remove('hidden');
+            }
+        };
+    </script>
+</body>
+</html>

@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.database import engine, Base
 from backend.routers import auth, claims
+from backend.models import claim  # noqa: F401 — necesario para que create_all() cree la tabla claims
 
 # Intenta crear las tablas al arrancar. Si la BD no responde, avisa pero no peta.
 # Cuando añada más modelos (claims, etc.) se crearán aquí también automáticamente.
