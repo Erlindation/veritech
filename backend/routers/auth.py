@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from backend.database import get_db
 from backend.models.user import User
-from backend.schemas.users import UserCreate, UserLogin, UserResponse
+from backend.schemas.users import UserCreate, UserLogin, UserResponse, PasswordReset
 from backend.services.auth import hash_password, verify_password, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
@@ -38,8 +38,6 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 def login(credentials: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == credentials.email).first()
 
-    # El mismo error tanto si el email no existe como si la contraseña es incorrecta.
-    # No quiero dar pistas sobre qué falló exactamente.
     if not user or not verify_password(credentials.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -49,3 +47,13 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
 
     token = create_access_token({"sub": user.email})
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
+def reset_password(data: PasswordReset, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="No existe ninguna cuenta con ese email.")
+    user.hashed_password = hash_password(data.new_password)
+    db.commit()
+    return {"message": "Contraseña actualizada correctamente."}

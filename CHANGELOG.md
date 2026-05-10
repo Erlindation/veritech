@@ -301,6 +301,55 @@ La idea inicial era usar React para el frontend. Sin embargo, con el tiempo rest
 
 ---
 
+## [Semana 9] – 10/05/2026
+
+### Añadido
+- `backend/schemas/users.py`: schema `PasswordReset` con validación de longitud mínima.
+- `backend/routers/auth.py`: endpoint `POST /auth/reset-password` — permite cambiar la contraseña de una cuenta existente a partir del email. No requiere token; devuelve 404 si el email no está registrado.
+- `backend/services/fact_check.py`: `check_claim()` ahora devuelve una tupla `(verdict, source)`. El campo `source` contiene la URL del artículo de fact-check cuando la API la incluye, o `None` si no hay.
+- `backend/models/claim.py`: columna `source` (nullable) para almacenar la URL de la fuente del veredicto.
+- `backend/schemas/claims.py`: campo `source` en `ClaimResponse`.
+- `backend/routers/claims.py`: creación y actualización de claims adaptadas para desempaquetar la tupla `(verdict, source)`.
+
+### Mejoras en el frontend
+- Edición inline en la tabla: al pulsar "Editar", la celda de texto se convierte en un campo editable con botones Guardar y Cancelar en la misma fila. Reemplaza el diálogo nativo del navegador anterior.
+- Veredicto con etiquetas de color: verde para resultados positivos, rojo para negativos y gris para el resto. La clasificación se basa en palabras clave del texto devuelto por la API.
+- Columna Fuente: enlace "Ver fuente" al artículo original cuando la API lo devuelve; guión si no hay fuente disponible.
+- Aviso sobre limitación de la API: texto informativo encima de la tabla explicando que los veredictos provienen de fact-checks de terceros y pueden no coincidir exactamente con la afirmación introducida.
+- Ajustes visuales: línea de acento azul en la parte superior del topbar, hover en filas de la tabla, sombra de cards más refinada, columna `#` en gris y tamaño reducido, celdas alineadas verticalmente al centro.
+
+### Bug corregido
+- Las filas de estado de la tabla (cargando, vacío, error) usaban `colspan="5"` con una tabla de 6 columnas, lo que dejaba la última columna sin cubrir.
+
+### Limitación identificada y documentada
+La Google Fact Check Tools API no evalúa afirmaciones directamente: busca fact-checks existentes publicados por terceros que se parezcan al texto enviado y devuelve el veredicto que ese fact-checker asignó a su propia formulación. Si la afirmación enviada no tiene un fact-check previo exacto, el veredicto puede ser impreciso o no existir. Se documenta como limitación conocida en el README y se informa al usuario mediante un aviso en la interfaz.
+
+### Horas dedicadas
+| Actividad | Tiempo |
+|-----------|--------|
+| Endpoint `reset-password` y schema `PasswordReset` | 0h 30min |
+| Campo `source` en modelo, schema, servicio y router | 0h 45min |
+| Edición inline y badges de veredicto en frontend | 0h 45min |
+| Columna Fuente y aviso de limitación de API | 0h 20min |
+| Ajustes visuales y corrección de bug `colspan` | 0h 30min |
+| Documentación (README y changelog) | 0h 20min |
+| **Total sesión** | **~3h 10min** |
+
+---
+
+## [Semana 9 – Sesión 2] – 10/05/2026
+
+### Ajustes gráficos
+Retoques finales de estilo en `style.css`: cambio de paleta de azul a violeta/lila como color principal, fondo con tinte lila suave y hover de filas actualizado. Los colores semánticos de los badges (verde/rojo) no se tocan.
+
+### Horas dedicadas
+| Actividad | Tiempo |
+|-----------|--------|
+| Ajustes de paleta y revisión visual | 0h 30min |
+| **Total sesión** | **~0h 30min** |
+
+---
+
 ## Resumen acumulado
 
 | Semana | Fecha | Horas |
@@ -316,7 +365,9 @@ La idea inicial era usar React para el frontend. Sin embargo, con el tiempo rest
 | Semana 7 (s2) | 25/04/2026 | 3h |
 | Semana 8 | 27/04/2026 | 1h 30min |
 | Semana 8 (s2) | 02/05/2026 | 3h 15min |
-| **TOTAL** | | **~29h** |
+| Semana 9 | 10/05/2026 | 3h 10min |
+| Semana 9 (s2) | 10/05/2026 | 0h 30min |
+| **TOTAL** | | **~32h 40min** |
 
 ---
 

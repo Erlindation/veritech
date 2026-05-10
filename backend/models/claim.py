@@ -11,6 +11,7 @@ class Claim(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    text = Column(String, nullable=False)  # la afirmación en texto plano que manda el usuario
-    verdict = Column(String, nullable=True)  # se rellena después de consultar la API externa
+    text = Column(String, nullable=False)
+    verdict = Column(String, nullable=True)
+    source = Column(String, nullable=True)  # URL del artículo de fact-check que emite el veredicto
     created_at = Column(DateTime(timezone=True), server_default=func.now())

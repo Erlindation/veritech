@@ -27,6 +27,18 @@ class UserLogin(BaseModel):
     password: str
 
 
+class PasswordReset(BaseModel):
+    email: EmailStr
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def password_min_length(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres.")
+        return v
+
+
 # Lo que devuelve la API sobre un usuario.
 # La contraseña NO aparece aquí — ni el hash. Nunca se devuelve.
 # from_attributes=True le dice a Pydantic que puede leer directamente

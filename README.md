@@ -60,6 +60,7 @@ frontend/
 | GET | `/` | No | Health check |
 | POST | `/auth/register` | No | Registro de usuario |
 | POST | `/auth/login` | No | Login — devuelve token JWT |
+| POST | `/auth/reset-password` | No | Cambia la contraseña de una cuenta existente |
 | POST | `/claims/` | JWT | Envía una afirmación y recibe veredicto |
 | GET | `/claims/` | JWT | Lista las afirmaciones del usuario (paginado) |
 | GET | `/claims/{id}` | JWT | Devuelve una afirmación concreta |
@@ -82,18 +83,29 @@ Documentación interactiva completa en `http://localhost:8000/docs` con Swagger
 - `POST /auth/register` — rechaza emails duplicados y contraseñas débiles
 - `POST /auth/login` — error genérico identificado y corregido (no se sabe si el email existe)
 - CRUD completo sobre `claims` operativo y probado en Swagger
-- Frontend funcional: login, registro, listado de afirmaciones, crear, editar y eliminar
+- `POST /auth/reset-password` — permite cambiar la contraseña de una cuenta existente
+- Campo `source` en claims — URL del artículo de fact-check que emite el veredicto
+- Frontend funcional: login, registro, listado de afirmaciones, crear, editar inline y eliminar
+- Veredicto con etiquetas de color (verde / rojo / gris según resultado)
+- Columna Fuente con enlace al artículo original cuando la API lo devuelve
 
-### En desarrollo
-- Diferenciación visual del veredicto en la tabla (etiquetas por color según resultado)
-- Formulario de edición inline en la tabla en lugar de diálogo del navegador
+### Pendiente / mejoras posibles
 - Adaptación del diseño a pantallas pequeñas
-
-### Ideas para el futuro
-- Clasificación propia del veredicto basada en la respuesta de la API, en lugar de mostrar el texto literal que devuelve Google
+- Clasificación propia del veredicto en lugar de mostrar el texto literal que devuelve Google
 - Filtrado y búsqueda de afirmaciones en el dashboard
 - Historial exportable (CSV o PDF)
-- Posibilidad de adjuntar fuentes o evidencias manuales a una afirmación
+
+---
+
+## Limitaciones conocidas
+
+**Precisión del veredicto**
+La Google Fact Check Tools API no evalúa afirmaciones directamente. Busca fact-checks ya publicados por terceros (Snopes, Maldita, Reuters, etc.) que se parezcan al texto enviado, y devuelve el veredicto que ese fact-checker asignó a su propia formulación. Esto implica dos situaciones habituales:
+
+- Si la afirmación enviada no tiene un fact-check previo exacto, la API devuelve "No comprobable" aunque la afirmación sea verificable.
+- Si existe un fact-check sobre una afirmación relacionada pero formulada de forma distinta (por ejemplo, en sentido contrario), el veredicto devuelto puede no corresponderse con la afirmación original.
+
+Esta limitación se informa al usuario en la interfaz y se contempla como área de mejora futura: sustituir o complementar la API con un modelo de lenguaje que evalúe la afirmación directamente.
 
 ---
 

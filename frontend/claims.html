@@ -16,7 +16,6 @@
     <main class="container">
         <h2>Mis afirmaciones</h2>
 
-        <!-- Formulario nueva afirmación -->
         <div class="card new-claim">
             <h3>Nueva afirmación</h3>
             <form id="form-create" onsubmit="handleCreate(event)">
@@ -28,20 +27,21 @@
             </form>
         </div>
 
-        <!-- Tabla de claims -->
         <div class="card">
+            <p class="api-notice">Los veredictos provienen de fact-checks publicados por terceros y pueden no coincidir exactamente con la afirmación introducida.</p>
             <table id="claims-table">
                 <thead>
                     <tr>
                         <th>#</th>
                         <th>Afirmación</th>
                         <th>Veredicto</th>
+                        <th>Fuente</th>
                         <th>Fecha</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="claims-body">
-                    <tr><td colspan="5" class="empty">Cargando...</td></tr>
+                    <tr><td colspan="6" class="empty">Cargando...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -60,28 +60,45 @@
             window.location.href = 'index.html';
         };
 
+        function verdictBadge(verdict) {
+            if (!verdict) return '<span class="badge badge-unknown">—</span>';
+            const v = verdict.toLowerCase();
+            if (v.includes('falso') || v.includes('false') || v.includes('incorrect') || v.includes('mislead')) {
+                return `<span class="badge badge-false">${verdict}</span>`;
+            }
+            if (v.includes('verdadero') || v.includes('true') || v.includes('correct') || v.includes('accurate')) {
+                return `<span class="badge badge-true">${verdict}</span>`;
+            }
+            return `<span class="badge badge-unknown">${verdict}</span>`;
+        }
+
+        function rowActions(id) {
+            return `
+                <button onclick="handleEdit(${id})" class="btn-edit">Editar</button>
+                <button onclick="handleDelete(${id})" class="btn-delete">Eliminar</button>
+            `;
+        }
+
         async function loadClaims() {
             const tbody = document.getElementById('claims-body');
             try {
                 const claims = await getClaims();
                 if (claims.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="empty">Todavía no has enviado ninguna afirmación.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty">Todavía no has enviado ninguna afirmación.</td></tr>';
                     return;
                 }
                 tbody.innerHTML = claims.map(c => `
                     <tr id="row-${c.id}">
                         <td>${c.id}</td>
                         <td class="claim-text">${c.text}</td>
-                        <td>${c.verdict ?? '—'}</td>
+                        <td>${verdictBadge(c.verdict)}</td>
+                        <td>${c.source ? `<a href="${c.source}" target="_blank" class="source-link">Ver fuente</a>` : '<span class="no-source">—</span>'}</td>
                         <td>${new Date(c.created_at).toLocaleDateString('es-ES')}</td>
-                        <td class="actions">
-                            <button onclick="handleEdit(${c.id})" class="btn-edit">Editar</button>
-                            <button onclick="handleDelete(${c.id})" class="btn-delete">Eliminar</button>
-                        </td>
+                        <td class="actions">${rowActions(c.id)}</td>
                     </tr>
                 `).join('');
             } catch {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty error">Error al cargar las afirmaciones.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="empty error">Error al cargar las afirmaciones.</td></tr>';
             }
         }
 
@@ -100,18 +117,36 @@
             }
         };
 
-        // edición rápida — pendiente sustituir por modal
-        window.handleEdit = async function(id) {
+        window.handleEdit = function(id) {
             const row = document.getElementById(`row-${id}`);
-            const currentText = row.querySelector('.claim-text').textContent;
-            const newText = prompt('Editar afirmación:', currentText);
-            if (!newText || newText === currentText) return;
+            const textCell = row.querySelector('.claim-text');
+            row.dataset.originalText = textCell.textContent;
+            textCell.innerHTML = '<input type="text" class="edit-input">';
+            textCell.querySelector('input').value = row.dataset.originalText;
+            textCell.querySelector('input').focus();
+            row.querySelector('.actions').innerHTML = `
+                <button onclick="saveEdit(${id})" class="btn-save">Guardar</button>
+                <button onclick="cancelEdit(${id})" class="btn-cancel">Cancelar</button>
+            `;
+        };
+
+        window.saveEdit = async function(id) {
+            const row = document.getElementById(`row-${id}`);
+            const newText = row.querySelector('.edit-input').value.trim();
+            if (!newText) return;
             try {
                 await updateClaim(id, newText);
                 await loadClaims();
             } catch {
+                cancelEdit(id);
                 alert('No se pudo guardar el cambio.');
             }
+        };
+
+        window.cancelEdit = function(id) {
+            const row = document.getElementById(`row-${id}`);
+            row.querySelector('.claim-text').textContent = row.dataset.originalText;
+            row.querySelector('.actions').innerHTML = rowActions(id);
         };
 
         window.handleDelete = async function(id) {

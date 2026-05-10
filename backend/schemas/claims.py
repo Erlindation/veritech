@@ -22,4 +22,5 @@ class ClaimResponse(BaseModel):
     id: int
     text: str
     verdict: Optional[str]
+    source: Optional[str]
     created_at: datetime

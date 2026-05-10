@@ -42,13 +42,13 @@ def create_claim(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Consulto la API antes de guardar — así el veredicto queda en la BD desde el principio.
-    verdict = check_claim(claim_data.text)
+    verdict, source = check_claim(claim_data.text)
 
     new_claim = Claim(
         user_id=current_user.id,
         text=claim_data.text,
         verdict=verdict,
+        source=source,
     )
     db.add(new_claim)
     db.commit()
@@ -97,7 +97,7 @@ def update_claim(
     if not claim:
         raise HTTPException(status_code=404, detail="Afirmación no encontrada.")
     claim.text = claim_data.text
-    claim.verdict = check_claim(claim_data.text)
+    claim.verdict, claim.source = check_claim(claim_data.text)
     db.commit()
     db.refresh(claim)
     return claim
